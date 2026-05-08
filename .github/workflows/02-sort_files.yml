@@ -1,4 +1,4 @@
-name: 📝 2-Sort files
+name: 📝 2-Sort orphan files
 
 on:
   workflow_dispatch:
@@ -13,37 +13,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Group split zip/deb/part files into subfolders
+      - name: Sort only ungrouped files
         run: |
           cd downloads || exit 0
-
+          
+          # Get folders that already exist
+          existing_folders=$(ls -d */ 2>/dev/null | sed 's|/||g')
+          
           for file in *; do
             if [[ -f "$file" ]]; then
-              # Remove .zip, .z01..z99, .deb, .part extensions
+              # Try to extract base name
               base="${file%.zip}"
-              base="${base%.z[0-9][0-9]}"
+              base="${base%.z[0-9]*}"
               base="${base%.deb}"
               base="${base%.part}"
               
-              if [[ "$base" != "$file" ]]; then
-                echo "📁 Creating folder: $base"
+              # Only create folder if:
+              # 1. Base name is different from filename
+              # 2. Folder doesn't already exist
+              # 3. Base name isn't already a folder
+              if [[ "$base" != "$file" ]] && [[ ! -d "$base" ]] && [[ ! " $existing_folders " =~ " $base " ]]; then
+                echo "📁 Creating folder and moving: $base"
                 mkdir -p "$base"
-                mv "$base".* "$base"/ 2>/dev/null || true
+                mv "${base}"* "$base"/ 2>/dev/null || true
               fi
             fi
           done
 
-      - name: Commit and push organized structure
+      - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-
           git add downloads/
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "[AVASAM] Organize split files into folders [skip ci]"
-            git pull --rebase origin "${{ github.ref_name }}"
-            git push origin HEAD:"${{ github.ref_name }}"
-            echo "✅ Sorting changes pushed"
-          fi
+          git diff --staged --quiet || (git commit -m "[AVASAM] Sort orphan files [skip ci]" && git push)
