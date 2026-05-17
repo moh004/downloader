@@ -1,5 +1,6 @@
 # Downloaded list :
 
+- [Gemma-4-E4B-Uncensored-HauhauCS-Aggressive](./Gemma-4-E4B-Uncensored-HauhauCS-Aggressive)
 - [OllamaSetup](./OllamaSetup)
 - [archive_20260508_001317](./archive_20260508_001317)
 - [koboldcpp](./koboldcpp)
